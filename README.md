@@ -28,6 +28,7 @@ RCE on Rails 5.2.2 using a path traversal (CVE-2019-5418) and a deserialization 
 
 
 ---
+Fix of **CVE-2019-5420**
 
 ```diff
 From 7f5ccda38bfecbe0bf00f15e5b8f5e40d52ab3f1 Mon Sep 17 00:00:00 2001
@@ -158,6 +159,109 @@ index 6568a356d6..fe850d45ec 100644
  
        yield @app if block_given?
        @app.initialize!
+-- 
+2.21.0
+```
+
+Fix of **CVE-2019-5418**
+```diff
+From d7fac9c09a535ec7f11bb9aa8addb4af37b7d4b5 Mon Sep 17 00:00:00 2001
+From: John Hawthorn <john@hawthorn.email>
+Date: Mon, 4 Mar 2019 18:24:51 -0800
+Subject: [PATCH] Only accept formats from registered mime types
+
+[CVE-2019-5418]
+[CVE-2019-5419]
+---
+ .../lib/action_dispatch/http/mime_negotiation.rb   |  5 +++++
+ actionpack/test/controller/mime/respond_to_test.rb | 10 ++++++----
+ .../new_base/content_negotiation_test.rb           | 14 ++++++++++++--
+ 3 files changed, 23 insertions(+), 6 deletions(-)
+
+diff --git a/actionpack/lib/action_dispatch/http/mime_negotiation.rb b/actionpack/lib/action_dispatch/http/mime_negotiation.rb
+index d7435fa8df..ada52adfeb 100644
+--- a/actionpack/lib/action_dispatch/http/mime_negotiation.rb
++++ b/actionpack/lib/action_dispatch/http/mime_negotiation.rb
+@@ -74,6 +74,11 @@ def formats
+           else
+             [Mime[:html]]
+           end
++
++          v = v.select do |format|
++            format.symbol || format.ref == "*/*"
++          end
++
+           set_header k, v
+         end
+       end
+diff --git a/actionpack/test/controller/mime/respond_to_test.rb b/actionpack/test/controller/mime/respond_to_test.rb
+index f9ffd5f54c..a80cef83b7 100644
+--- a/actionpack/test/controller/mime/respond_to_test.rb
++++ b/actionpack/test/controller/mime/respond_to_test.rb
+@@ -105,7 +105,7 @@ def made_for_content_type
+   def custom_type_handling
+     respond_to do |type|
+       type.html { render body: "HTML"    }
+-      type.custom("application/crazy-xml")  { render body: "Crazy XML"  }
++      type.custom("application/fancy-xml")  { render body: "Fancy XML"  }
+       type.all  { render body: "Nothing" }
+     end
+   end
+@@ -294,12 +294,14 @@ def setup
+     @request.host = "www.example.com"
+     Mime::Type.register_alias("text/html", :iphone)
+     Mime::Type.register("text/x-mobile", :mobile)
++    Mime::Type.register("application/fancy-xml", :fancy_xml)
+   end
+ 
+   def teardown
+     super
+     Mime::Type.unregister(:iphone)
+     Mime::Type.unregister(:mobile)
++    Mime::Type.unregister(:fancy_xml)
+   end
+ 
+   def test_html
+@@ -455,10 +457,10 @@ def test_synonyms
+   end
+ 
+   def test_custom_types
+-    @request.accept = "application/crazy-xml"
++    @request.accept = "application/fancy-xml"
+     get :custom_type_handling
+-    assert_equal "application/crazy-xml", @response.content_type
+-    assert_equal "Crazy XML", @response.body
++    assert_equal "application/fancy-xml", @response.content_type
++    assert_equal "Fancy XML", @response.body
+ 
+     @request.accept = "text/html"
+     get :custom_type_handling
+diff --git a/actionpack/test/controller/new_base/content_negotiation_test.rb b/actionpack/test/controller/new_base/content_negotiation_test.rb
+index 7205e90176..6de91c57b7 100644
+--- a/actionpack/test/controller/new_base/content_negotiation_test.rb
++++ b/actionpack/test/controller/new_base/content_negotiation_test.rb
+@@ -20,9 +20,19 @@ def all
+       assert_body "Hello world */*!"
+     end
+ 
+-    test "Not all mimes are converted to symbol" do
++    test "A js or */* Accept header will return HTML" do
++      get "/content_negotiation/basic/hello", headers: { "HTTP_ACCEPT" => "text/javascript, */*" }
++      assert_body "Hello world text/html!"
++    end
++
++    test "A js or */* Accept header on xhr will return HTML" do
++      get "/content_negotiation/basic/hello", headers: { "HTTP_ACCEPT" => "text/javascript, */*" }, xhr: true
++      assert_body "Hello world text/javascript!"
++    end
++
++    test "Unregistered mimes are ignored" do
+       get "/content_negotiation/basic/all", headers: { "HTTP_ACCEPT" => "text/plain, mime/another" }
+-      assert_body '[:text, "mime/another"]'
++      assert_body '[:text]'
+     end
+   end
+ end
 -- 
 2.21.0
 ```
