@@ -20,7 +20,7 @@ RCE on Rails 5.2.2 using a path traversal (CVE-2019-5418) and a deserialization 
 1. The exploit check if the Rails application is vulnerable to the **CVE-2019-5418**
 2. Then gets the content of the files: `credentials.yml.enc` and `master.key`
 3. Decrypt the *credentials.yml.enc* and get the **secret_key_base** value
-4. Craft a request to the ressource `/rails/active_storage/disk/:encoded_key/*filename(.:format)` => **CVE-2019-5420**
+4. Craft a request to the resource `/rails/active_storage/disk/:encoded_key/*filename(.:format)` => **CVE-2019-5420**
 5. Send the request to the vulnerable server
 6. The code is executed on the server`
 
