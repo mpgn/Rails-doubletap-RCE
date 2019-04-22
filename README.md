@@ -26,6 +26,9 @@ RCE on Rails 5.2.2 using a path traversal (CVE-2019-5418) and a deserialization 
 
 ![capture d'écran_1](https://user-images.githubusercontent.com/5891788/54864755-f2a87600-4d5b-11e9-9eab-8402ea52c978.png)
 
+**Mitigations**
+
+- You may notice the cache level is disabled on the exploit, but you can use a race condition to retrieve the two files: https://gist.github.com/snyff/04c3463845480632a1fe192308c31439#file-race_condition-sh
 
 ---
 Fix of **CVE-2019-5420**
