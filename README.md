@@ -22,7 +22,7 @@ RCE on Rails 5.2.2 using a path traversal (CVE-2019-5418) and a deserialization 
 3. Decrypt the *credentials.yml.enc* and get the **secret_key_base** value
 4. Craft a request to the ressource `/rails/active_storage/disk/:encoded_key/*filename(.:format)` => **CVE-2019-5420**
 5. Send the request to the vulnerable server
-6. The code is executed on the server`
+6. The code is executed on the server
 
 ![capture d'écran_1](https://user-images.githubusercontent.com/5891788/54864755-f2a87600-4d5b-11e9-9eab-8402ea52c978.png)
 
